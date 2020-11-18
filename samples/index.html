@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <script src="../node_modules/chart.js/dist/Chart.bundle.min.js"></script>
+    <script src="../dist/boxselect.js"></script>
+
+    <title>Chart.js | boxselect sample</title>
+</head>
+
+<body>
+    <div style="flex: auto; max-width: 970px; justify-content: center; margin: auto;">
+        <div style="max-height: 600px;">
+            <canvas id="xyChart"></canvas>
+        </div>
+        <div style="height: 175px">
+            <canvas id="xChart"></canvas>
+        </div>
+        <div style="height: 175px">
+            <canvas id="yChart"></canvas>
+        </div>
+    </div>
+    <script>
+        // set up data
+        let labels = [];
+        let xydata = [];
+        let xdata = [];
+        let ydata = [];
+        let startDate = new Date(Date.UTC(2020, 00, 01));
+        let xvalue = 0;
+        let yvalue = 0;
+        for (let i = 0; i < 500; i++) {
+            labels.push(new Date(startDate));
+            xydata.push({ x: xvalue, y: yvalue });
+
+            xdata.push({ x: new Date(startDate), y: xvalue });
+            ydata.push({ x: new Date(startDate), y: yvalue });
+
+            xvalue += (Math.random() - 0.5);
+            yvalue += (Math.random() - 0.5);
+            startDate.setUTCHours(startDate.getUTCHours() + 1);
+        }
+
+        var ctxXY = document.getElementById('xyChart').getContext('2d');
+        var xyChart = new Chart(ctxXY, {
+            type: 'scatter',
+            data: {
+                datasets: [{
+                    labels: labels,
+                    label: 'Math.random() walk',
+                    data: xydata,
+                }]
+            },
+            options: {
+                animation: {
+                    duration: 0
+                },
+                plugins: {
+                    boxselect: {
+                        select: {
+                            enabled: true
+                        },
+                        callbacks: {
+                            beforeSelect: function(startX, endX, startY, endY){
+                                // return false to cancel selection
+                                return true;
+                            },
+                            afterSelect: updateDatasets_scatter
+                        }
+                    },
+                }
+            },
+        });
+
+
+        var ctxX = document.getElementById('xChart').getContext('2d');
+        var xChart = new Chart(ctxX, {
+            type: 'line',
+            data: {
+                datasets: [{
+                    labels: labels,
+                    label: 'x data',
+                    data: xdata,
+                    borderColor: '#3498DB',
+                    backgroundColor: '#3498DB',
+                    borderJoinStyle: 'bevel',
+                    type: 'line',
+                    pointRadius: 0,
+                    fill: false,
+                    lineTension: 0,
+                    borderWidth: 2,
+                    order: 1
+                }]
+            },
+            options: {
+                animation: {
+                    duration: 0
+                },
+                maintainAspectRatio: false,
+                responsive: true,
+                scales: {
+                    xAxes: [{
+                        type: 'time',
+                        distribution: 'linear'
+                    }]
+                },
+                plugins: {
+                    boxselect: {
+                        callbacks: {
+                            afterSelect: updateDatasets_xline
+                        }
+                    }
+                }
+            },
+            plugins: []
+        });
+        var ctxY = document.getElementById('yChart').getContext('2d');
+        var yChart = new Chart(ctxY, {
+            type: 'line',
+            data: {
+                datasets: [{
+                    labels: labels,
+                    label: 'y data (boxselect disabled)',
+                    data: ydata,
+                    borderColor: '#3498DB',
+                    backgroundColor: '#3498DB',
+                    borderJoinStyle: 'bevel',
+                    type: 'line',
+                    pointRadius: 0,
+                    fill: false,
+                    lineTension: 0,
+                    borderWidth: 2,
+                    order: 1
+                }]
+            },
+            options: {
+                animation: {
+                    duration: 0
+                },
+                maintainAspectRatio: false,
+                responsive: true,
+                scales: {
+                    xAxes: [{
+                        type: 'time',
+                        distribution: 'linear'
+                    }]
+                },
+                plugins: {
+                    boxselect: false
+                }
+            }
+        });
+
+        function updateDatasets_scatter(startX, endX, startY, endY, datasets) {
+
+            while (xyChart.data.datasets.length > 1) {
+                xyChart.data.datasets.pop();
+            }
+            while (xChart.data.datasets.length > 1) {
+                xChart.data.datasets.pop();
+            }
+            while (yChart.data.datasets.length > 1) {
+                yChart.data.datasets.pop();
+            }
+            while (datasets.length > 1) {
+                datasets.pop();
+            }
+
+            datasets.forEach(dataset => {
+                let xData = [];
+                let yData = [];
+                for (let i = 0; i < dataset.data.length; i++) {
+                    const point = dataset.data[i];
+                    const label = dataset.labels[i];
+                    xData.push({ x: label, y: point.x })
+                    yData.push({ x: label, y: point.y })
+                }
+                xyChart.data.datasets.push(
+                    {
+                        data: dataset.data,
+                        label: 'highlighted',
+                        borderColor: '#3498DB',
+                        backgroundColor: '#f56042',
+                        type: 'scatter',
+                        borderWidth: 1,
+                    }
+                )
+                xChart.data.datasets.push({
+                    data: xData,
+                    label: 'highlighted',
+                    borderColor: '#3498DB',
+                    backgroundColor: '#f56042',
+                    type: 'scatter',
+                    borderWidth: 1,
+                })
+                yChart.data.datasets.push({
+                    data: yData,
+                    label: 'highlighted',
+                    borderColor: '#3498DB',
+                    backgroundColor: '#f56042',
+                    type: 'scatter',
+                    borderWidth: 1,
+                })
+            });
+
+
+
+            xyChart.update();
+            xChart.update()
+            yChart.update()
+        }
+
+        function updateDatasets_xline(startX, endX, startY, endY, datasets) {
+
+            while (xyChart.data.datasets.length > 1) {
+                xyChart.data.datasets.pop();
+            }
+            while (xChart.data.datasets.length > 1) {
+                xChart.data.datasets.pop();
+            }
+            while (yChart.data.datasets.length > 1) {
+                yChart.data.datasets.pop();
+            }
+            while (datasets.length > 1) {
+                datasets.pop();
+            }
+
+            datasets.forEach(dataset => {
+                let xData = [];
+                let yData = [];
+                let xyData = [];
+                for (let i = 0; i < dataset.data.length; i++) {
+                    const xpoint = dataset.data[i];
+                    const index = dataset.indexes[i];
+                    const label = dataset.labels[i];
+
+                    const ypoint = yChart.data.datasets[0].data[index];
+                    const xyPoint = xyChart.data.datasets[0].data[index];
+                    xData.push({ x: xpoint.x, y: xpoint.y });
+                    yData.push({ x: label, y: ypoint.y });
+                    xyData.push({...xyPoint});
+                }
+                xyChart.data.datasets.push(
+                    {
+                        data: xyData,
+                        label: 'highlighted',
+                        borderColor: '#3498DB',
+                        backgroundColor: '#f56042',
+                        type: 'scatter',
+                        borderWidth: 1,
+                    }
+                )
+                xChart.data.datasets.push({
+                    data: xData,
+                    label: 'highlighted',
+                    borderColor: '#3498DB',
+                    backgroundColor: '#f56042',
+                    type: 'scatter',
+                    borderWidth: 1,
+                })
+                yChart.data.datasets.push({
+                    data: yData,
+                    label: 'highlighted',
+                    borderColor: '#3498DB',
+                    backgroundColor: '#f56042',
+                    type: 'scatter',
+                    borderWidth: 1,
+                })
+            });
+
+
+
+            xyChart.update();
+            xChart.update()
+            yChart.update()
+        }
+
+    </script>
+</body>
+
+</html>
