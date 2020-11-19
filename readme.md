@@ -12,7 +12,7 @@ npm install --save chartjs-plugin-boxselect
 To use with a `<script>` tag
 ```
 <script src="https://cdn.jsdelivr.net/npm/chart.js@2.9.4"></script>
-<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-boxselect@1.0.0"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-boxselect@1.0.3"></script>
 ```
 
 ## Configuration
