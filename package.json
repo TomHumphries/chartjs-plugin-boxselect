@@ -1,14 +1,32 @@
 {
   "name": "chartjs-plugin-boxselect",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "description": "Chart.js plugin to select points on a chart with a click-and-drag box",
-  "main": "index.js",
-  "scripts": {
-    "build": "rollup src/main.js --format umd --name \"boxselectplugin\" --file dist/boxselect.js"
-  },
   "author": "Thomas Humphries",
   "license": "MIT",
+  "jsdelivr": "dist/chartjs-plugin-boxselect.js",
+  "unpkg": "dist/chartjs-plugin-boxselect.js",
+  "main": "dist/chartjs-plugin-boxselect.js",
+  "scripts": {
+    "build": "rollup src/main.js --format umd --name \"boxselectplugin\" --file dist/chartjs-plugin-boxselect.js"
+  },
+  "files": [
+    "dist/chartjs-plugin-boxselect.js"
+  ],
   "dependencies": {
     "chart.js": "^2.9.4"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/TomHumphries/chartjs-plugin-boxselect"
+  },
+  "keywords": [
+    "chart.js",
+    "chartjs",
+    "plugin",
+    "select",
+    "box",
+    "scatter",
+    "line"
+  ]
 }
