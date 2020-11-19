@@ -152,9 +152,6 @@
 				buttons = 0;
 			}
 
-			chart.boxselect.suppressTooltips = e.stop && suppressTooltips;
-
-
 			chart.boxselect.enabled = true;
 
 			// handle drag to select
