@@ -3,6 +3,7 @@ import Chart from 'chart.js';
 var defaultOptions = {
 	select: {
 		enabled: true,
+		direction: 'xy',
 		selectboxBackgroundColor: 'rgba(66,133,244,0.2)',
 		selectboxBorderColor: '#48F',
 	},
@@ -67,8 +68,22 @@ function doSelect(chart, startX, endX, startY, endY) {
 
 			var dataPoint = sourceDataset.data[dataIndex];
 
-			if (dataPoint.x >= startX && dataPoint.x <= endX
-				&& dataPoint.y >= startY && dataPoint.y <= endY) {
+			let filterOnX = true;
+			let inX = true;
+			if (startX == null) {
+				filterOnX = false;
+			} else {
+				inX = (dataPoint.x >= startX && dataPoint.x <= endX)
+			}
+			let filterOnY = true;
+			let inY = true;
+			if (startY == null) {
+				filterOnY = false;
+			} else {
+				inY = (dataPoint.y >= startY && dataPoint.y <= endY)
+			}
+
+			if (inX && inY) {
 				selectedDataset.data.push({ ...dataPoint });
 				selectedDataset.indexes.push(dataIndex)
 				if (selectedDataset.labels) {
@@ -92,10 +107,27 @@ function drawSelectbox(chart) {
 
 	var borderColor = getOption(chart, 'select', 'selectboxBorderColor');
 	var fillColor = getOption(chart, 'select', 'selectboxBackgroundColor');
+	var direction = getOption(chart, 'select', 'direction');
 
 	chart.ctx.beginPath();
+	// if direction == xy, rectangle
+	// if direction == x, horizontal selection only
+	// if direction == y, vertical selection only
+	let xStart = chart.boxselect.dragStartX;
+	let yStart = chart.boxselect.dragStartY;
+	let xSize = chart.boxselect.x - chart.boxselect.dragStartX;
+	let ySize = chart.boxselect.y - chart.boxselect.dragStartY;
+	if (direction == 'x') {
+		var yScale = getYScale(chart);
+		yStart = yScale.getPixelForValue(yScale.max);
+		ySize = yScale.getPixelForValue(yScale.min) - yScale.getPixelForValue(yScale.max);
+	} else if (direction == 'y') {
+		var xScale = getXScale(chart);
+		xStart = xScale.getPixelForValue(xScale.max);
+		xSize = xScale.getPixelForValue(xScale.min) - xScale.getPixelForValue(xScale.max);
+	}
 	// x y width height
-	chart.ctx.rect(chart.boxselect.dragStartX, chart.boxselect.dragStartY, chart.boxselect.x - chart.boxselect.dragStartX, chart.boxselect.y - chart.boxselect.dragStartY);
+	chart.ctx.rect(xStart, yStart, xSize, ySize);
 	chart.ctx.lineWidth = 1;
 	chart.ctx.strokeStyle = borderColor;
 	chart.ctx.fillStyle = fillColor;
@@ -159,12 +191,24 @@ var boxselectPlugin = {
 		if (chart.boxselect.dragStarted && buttons === 0) {
 			chart.boxselect.dragStarted = false;
 
+			var direction = getOption(chart, 'select', 'direction');
+			// if direction == xy, rectangle
+			// if direction == x, horizontal selection only
+			// if direction == y, vertical selection only
+
 			var xScale = getXScale(chart);
 			var yScale = getYScale(chart);
 			var startX = xScale.getValueForPixel(chart.boxselect.dragStartX);
 			var endX = xScale.getValueForPixel(chart.boxselect.x);
 			var startY = yScale.getValueForPixel(chart.boxselect.dragStartY);
 			var endY = yScale.getValueForPixel(chart.boxselect.y);
+			if (direction == 'x') {
+				startY = null;
+				endY = null;
+			} else if (direction == 'y') {
+				startX = null;
+				endX = null;
+			}
 
 			if (Math.abs(chart.boxselect.dragStartX - chart.boxselect.x) > 1 && Math.abs(chart.boxselect.dragStartY - chart.boxselect.y) > 1) {
 				doSelect(chart, startX, endX, startY, endY);

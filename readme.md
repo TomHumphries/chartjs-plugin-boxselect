@@ -12,7 +12,7 @@ npm install --save chartjs-plugin-boxselect
 To use with a `<script>` tag
 ```
 <script src="https://cdn.jsdelivr.net/npm/chart.js@2.9.4/dist/Chart.bundle.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-boxselect@1.0.5"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-boxselect"></script>
 ```
 
 ## Configuration
@@ -21,7 +21,8 @@ To configure the box-select plugin, add a new config option to a chart config.
 plugins: {
     boxselect: {
         select: {
-            enabled: true
+            enabled: true,
+            direction: 'xy'
         },
         callbacks: {
             beforeSelect: function(startX, endX, startY, endY) {
@@ -35,6 +36,9 @@ plugins: {
     },
 }
 ```
+### Options
+The `direction` setting defines which box shapes can be drawn. The options are `x`, `xy`, or `y`. The default is `xy`.
+
 The `datasets` parameter in the `afterSelect` callback is the same size as the array of datasets in the chart.   
 Each ```dataset``` has the parameters `data`, `labels`, and `indexes`.  
 `data` contains an array of points that fell inside the selection box.  
