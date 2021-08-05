@@ -28,5 +28,8 @@
     "box",
     "scatter",
     "line"
-  ]
+  ],
+  "devDependencies": {
+    "rollup": "^2.55.1"
+  }
 }
