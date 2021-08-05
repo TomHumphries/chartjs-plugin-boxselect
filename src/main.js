@@ -235,5 +235,5 @@ const boxselectPlugin = {
 
 };
 
-Chart.plugins.register(boxselectPlugin);
+Chart.register(boxselectPlugin);
 export default boxselectPlugin;

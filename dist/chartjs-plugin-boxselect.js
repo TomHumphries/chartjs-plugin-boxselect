@@ -1,8 +1,8 @@
 (function (global, factory) {
-	typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory(require('chart.js')) :
-	typeof define === 'function' && define.amd ? define(['chart.js'], factory) :
-	(global = typeof globalThis !== 'undefined' ? globalThis : global || self, global.boxselectplugin = factory(global.Chart));
-}(this, (function (Chart) { 'use strict';
+	typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory(require('chart.js/auto'), require('chart.js/helpers')) :
+	typeof define === 'function' && define.amd ? define(['chart.js/auto', 'chart.js/helpers'], factory) :
+	(global = typeof globalThis !== 'undefined' ? globalThis : global || self, global.boxselectplugin = factory(global.Chart, global.helpers));
+}(this, (function (Chart, helpers) { 'use strict';
 
 	function _interopDefaultLegacy (e) { return e && typeof e === 'object' && 'default' in e ? e : { 'default': e }; }
 
@@ -25,7 +25,10 @@
 	};
 
 	function getOption(chart, category, name) {
-		return Chart__default['default'].helpers.getValueOrDefault(chart.options.plugins.boxselect[category] ? chart.options.plugins.boxselect[category][name] : undefined, defaultOptions[category][name]);
+		if(category in chart.config.options.plugins.boxselect && name in chart.config.options.plugins.boxselect[category]){
+			return chart.config.options.plugins.boxselect[category][name];
+		}
+		return defaultOptions[category][name];
 	}
 
 
@@ -40,26 +43,26 @@
 	function doSelect(chart, startX, endX, startY, endY) {
 		// swap start/end if user dragged from right to left
 		if (startX > endX) {
-			var tmp = startX;
+			const tmp = startX;
 			startX = endX;
 			endX = tmp;
 		}
 		if (startY > endY) {
-			var tmp = startY;
+			const tmp = startY;
 			startY = endY;
 			endY = tmp;
 		}
 
 		// notify delegate
-		var beforeSelectCallback = Chart__default['default'].helpers.getValueOrDefault(chart.options.plugins.boxselect.callbacks ? chart.options.plugins.boxselect.callbacks.beforeSelect : undefined, defaultOptions.callbacks.beforeSelect);
-
-		if (!beforeSelectCallback(startX, endX, startY, endY)) {
+		var beforeSelectCallback = helpers.valueOrDefault(chart.options.plugins.boxselect.callbacks ? chart.options.plugins.boxselect.callbacks.beforeSelect : undefined, defaultOptions.callbacks.beforeSelect);
+		
+		if (!beforeSelectCallback) {
 			return false;
 		}
 
 		var datasets = [];
 		// filter dataset
-		for (var datasetIndex = 0; datasetIndex < chart.data.datasets.length; datasetIndex++) {
+		for (let datasetIndex = 0; datasetIndex < chart.data.datasets.length; datasetIndex++) {
 			const sourceDataset = chart.data.datasets[datasetIndex];
 
 			var selectedDataset = {
@@ -72,9 +75,9 @@
 			}
 
 			// iterate data points
-			for (var dataIndex = 0; dataIndex < sourceDataset.data.length; dataIndex++) {
+			for (let dataIndex = 0; dataIndex < sourceDataset.data.length; dataIndex++) {
 
-				var dataPoint = sourceDataset.data[dataIndex];
+				const dataPoint = sourceDataset.data[dataIndex];
 				let inX = true;
 				if (startX == null) ; else {
 					inX = (dataPoint.x >= startX && dataPoint.x <= endX);
@@ -99,16 +102,15 @@
 		chart.boxselect.end = endX;
 
 		// chart.update();
-
-		var afterSelectCallback = getOption(chart, 'callbacks', 'afterSelect');
+		const afterSelectCallback = getOption(chart, 'callbacks', 'afterSelect');
 		afterSelectCallback(startX, endX, startY, endY, datasets);
 	}
 
 	function drawSelectbox(chart) {
 
-		var borderColor = getOption(chart, 'select', 'selectboxBorderColor');
-		var fillColor = getOption(chart, 'select', 'selectboxBackgroundColor');
-		var direction = getOption(chart, 'select', 'direction');
+		const borderColor = getOption(chart, 'select', 'selectboxBorderColor');
+		const fillColor = getOption(chart, 'select', 'selectboxBackgroundColor');
+		const direction = getOption(chart, 'select', 'direction');
 
 		chart.ctx.beginPath();
 		// if direction == xy, rectangle
@@ -138,15 +140,11 @@
 		chart.ctx.closePath();
 	}
 
-	var boxselectPlugin = {
+	const boxselectPlugin = {
 
 		id: 'boxselect',
 
 		afterInit: function (chart) {
-
-			if (chart.config.options.scales.xAxes.length == 0) {
-				return
-			}
 
 			if (chart.options.plugins.boxselect === undefined) {
 				chart.options.plugins.boxselect = defaultOptions;
@@ -161,30 +159,25 @@
 				dragEndX: null,
 				dragStartY: null,
 				dragEndY: null,
-				suppressTooltips: false,
+				suppressTooltips: false
 			};
 
 		},
 
 		afterEvent: function (chart, e) {
 
-			var chartType = chart.config.type;
+			const chartType = chart.config.type;
 			if (chartType !== 'scatter' && chartType !== 'line') return;
-
-			// fix for Safari
-			var buttons = (e.native.buttons === undefined ? e.native.which : e.native.buttons);
-			if (e.native.type === 'mouseup') {
-				buttons = 0;
-			}
-
+			
+			const buttons = e.event.native.buttons;
 			chart.boxselect.enabled = true;
 
 			// handle drag to select
-			var selectEnabled = getOption(chart, 'select', 'enabled');
+			const selectEnabled = getOption(chart, 'select', 'enabled');
 
 			if (buttons === 1 && !chart.boxselect.dragStarted && selectEnabled) {
-				chart.boxselect.dragStartX = e.x;
-				chart.boxselect.dragStartY = e.y;
+				chart.boxselect.dragStartX = e.event.x;
+				chart.boxselect.dragStartY = e.event.y;
 				chart.boxselect.dragStarted = true;
 			}
 
@@ -192,17 +185,17 @@
 			if (chart.boxselect.dragStarted && buttons === 0) {
 				chart.boxselect.dragStarted = false;
 
-				var direction = getOption(chart, 'select', 'direction');
+				const direction = getOption(chart, 'select', 'direction');
 				// if direction == xy, rectangle
 				// if direction == x, horizontal selection only
 				// if direction == y, vertical selection only
 
-				var xScale = getXScale(chart);
-				var yScale = getYScale(chart);
-				var startX = xScale.getValueForPixel(chart.boxselect.dragStartX);
-				var endX = xScale.getValueForPixel(chart.boxselect.x);
-				var startY = yScale.getValueForPixel(chart.boxselect.dragStartY);
-				var endY = yScale.getValueForPixel(chart.boxselect.y);
+				const xScale = getXScale(chart);
+				const yScale = getYScale(chart);
+				let startX = xScale.getValueForPixel(chart.boxselect.dragStartX);
+				let endX = xScale.getValueForPixel(chart.boxselect.x);
+				let startY = yScale.getValueForPixel(chart.boxselect.dragStartY);
+				let endY = yScale.getValueForPixel(chart.boxselect.y);
 				if (direction == 'x') {
 					startY = null;
 					endY = null;
@@ -216,8 +209,8 @@
 				}
 			}
 
-			chart.boxselect.x = e.x;
-			chart.boxselect.y = e.y;
+			chart.boxselect.x = e.event.x;
+			chart.boxselect.y = e.event.y;
 
 			chart.draw();
 		},
@@ -242,7 +235,7 @@
 
 	};
 
-	Chart__default['default'].plugins.register(boxselectPlugin);
+	Chart__default['default'].register(boxselectPlugin);
 
 	return boxselectPlugin;
 
